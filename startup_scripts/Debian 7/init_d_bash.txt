@@ -1,0 +1,49 @@
+#!/bin/bash
+#
+# chkconfig: 35 90 12
+# description: Prometheus node_exporter
+#
+
+# Get function from functions library
+. /lib/lsb/init-functions
+
+SERVICE_NAME="node_exporter"
+SCRIPT=/usr/local/bin/node_exporter
+PIDFILE=/var/run/node_exporter.pid
+
+# Allow a $NODE_EXPORT_OPTS to be defined in this file to override behaviour.
+if test -f /etc/default/node_exporter; then
+    . /etc/default/node_exporter
+fi
+
+### main logic ###
+case "$1" in
+  start)
+        log_daemon_msg "Starting Node Exporter" $SERVICE_NAME || true
+        if start-stop-daemon --start --quiet --oknodo --pidfile $PIDFILE --background --make-pidfile --exec $SCRIPT -- $NODE_EXPORT_OPTS; then
+            log_end_msg 0 || true
+        else
+            log_end_msg 1 || true
+        fi
+        ;;
+  stop)
+        log_daemon_msg "Stopping Node Exporter" $SERVICE_NAME || true
+        if start-stop-daemon --stop --quiet --oknodo --pidfile $PIDFILE; then
+            log_end_msg 0 || true
+        else
+            log_end_msg 1 || true
+        fi
+        ;;
+  status)
+        status_of_proc -p $PIDFILE $SCRIPT $SERVICE_NAME && exit 0 || exit $?
+        ;;
+  restart|condrestart)
+        stop
+        start
+        ;;
+  *)
+        echo $"Usage: $0 {start|stop|restart|status}"
+        exit 1
+esac
+
+exit 0
